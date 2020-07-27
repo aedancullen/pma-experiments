@@ -23,6 +23,7 @@ def process(song, performer):
     subprocess.run('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format wav --output "' + textToSearch + '.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl, shell=True, stdout=subprocess.DEVNULL)
 
     data, sr = soundfile.read(textToSearch + ".wav")
+    assert sr==44100
     if len(data.shape) > 1 and data.shape[1] > 1:
         data = data.mean(axis=1)
 
@@ -31,18 +32,25 @@ def process(song, performer):
     chords = vamp.collect(data, sr, "nnls-chroma:chordino")
 
     subprocess.run('rm "' + textToSearch + '.wav"', shell=True)
+
+    # Make vampyhost "RealTime" objects into floats for pickling else they turn to zero
+    # (multiprocessing uses pickles for IPC)
+    melody['vector'] = list(melody['vector'])
+    melody['vector'][0] = float(melody['vector'][0])
+    for subdict in chords['list']:
+        subdict['timestamp'] = float(subdict['timestamp'])
     return (melody, chords)
 
 
 def writeout(results):
-    print("writeout called")
+    print(results)
 
 
 
 h5file = h5py.File("dataset.hdf5", "w")
 h5file.close()
 
-pool = mp.Pool(8)
+pool = mp.Pool(1)
 
 songids = []
 
