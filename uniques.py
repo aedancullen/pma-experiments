@@ -20,18 +20,17 @@ def process(song, performer):
     topurl = 'https://www.youtube.com' + res[0]['href']
 
     print("====>", textToSearch, topurl)
-    subprocess.run('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format wav --output "' + textToSearch + '.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl, shell=True)
+    subprocess.run('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format wav --output "' + textToSearch + '.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl, shell=True, stdout=subprocess.DEVNULL)
 
     data, sr = soundfile.read(textToSearch + ".wav")
     if len(data.shape) > 1 and data.shape[1] > 1:
         data = data.mean(axis=1)
 
-    print("====> melody")
+    print("====>", textToSearch, "VAMP...")
     melody = vamp.collect(data, sr, "mtg-melodia:melodia", parameters={"voicing": 0.2})
-    print("====> chords")
     chords = vamp.collect(data, sr, "nnls-chroma:chordino")
 
-    suprocess.run('rm "' + textToSearch + '.wav"', shell=True)
+    subprocess.run('rm "' + textToSearch + '.wav"', shell=True)
     return melody, chords
 
 
