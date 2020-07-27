@@ -1,6 +1,7 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
+import os
 
 def process(song, performer):
     headers = {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
@@ -15,6 +16,7 @@ def process(song, performer):
     topurl = 'https://www.youtube.com' + res[0]['href']
 
     print(textToSearch, topurl)
+    os.system('youtube-dl -f bestaudio --output "out/out.%(ext)s" ' + topurl)
 
 
 songids = []
