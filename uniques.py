@@ -1,9 +1,11 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
-import os
+import subprocess
 import soundfile
 import vamp
+import multiprocessing as mp
+import h5py
 
 def process(song, performer):
     headers = {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
@@ -17,11 +19,10 @@ def process(song, performer):
     res = soup.findAll(attrs={'class':'yt-uix-tile-link'})
     topurl = 'https://www.youtube.com' + res[0]['href']
 
-    print()
     print("====>", textToSearch, topurl)
-    os.system('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format wav --output "tmp.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl)
+    subprocess.run('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format wav --output "' + textToSearch + '.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl, shell=True)
 
-    data, sr = soundfile.read("tmp.wav")
+    data, sr = soundfile.read(textToSearch + ".wav")
     if len(data.shape) > 1 and data.shape[1] > 1:
         data = data.mean(axis=1)
 
@@ -30,18 +31,32 @@ def process(song, performer):
     print("====> chords")
     chords = vamp.collect(data, sr, "nnls-chroma:chordino")
 
+    suprocess.run('rm "' + textToSearch + '.wav"', shell=True)
     return melody, chords
 
+
+def writeout(melody, chords):
+    print("writeout called")
+
+
+
+h5file = h5py.File("dataset.hdf5", "w")
+h5file.close()
+
+pool = mp.Pool(2)
 
 songids = []
 
 with open("hs.csv", "r") as file:
     csv = csv.reader(file, quotechar='"', delimiter=',', quoting=csv.QUOTE_ALL, skipinitialspace=True)
-    print(next(csv))
+    next(csv) # clear first line
     for line in csv:
         url,weekid,week_position,song,performer,songid,instance,previous_week_position,peak_position,weeks_on_chart = tuple(line)
-        if not int(weekid[-4:]) >= 2000:
+        if not int(weekid[-4:]) >= 2019:
             continue
         if not songid in songids:
             songids.append(songid)
-            melody, chords = process(song, performer)
+            pool.apply_async(process, (song, performer), callback=writeout)
+
+pool.close()
+pool.join()
