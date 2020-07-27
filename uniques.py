@@ -17,15 +17,17 @@ def process(song, performer):
     res = soup.findAll(attrs={'class':'yt-uix-tile-link'})
     topurl = 'https://www.youtube.com' + res[0]['href']
 
-    print(textToSearch, topurl)
+    print()
+    print("====>", textToSearch, topurl)
     os.system('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format wav --output "tmp.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl)
 
     data, sr = soundfile.read("tmp.wav")
     if len(data.shape) > 1 and data.shape[1] > 1:
         data = data.mean(axis=1)
 
-    #melody = vamp.collect(data, sr, "mtg-melodia:melodia", parameters={"voicing": 0.2})
-    melody = None
+    print("====> melody")
+    melody = vamp.collect(data, sr, "mtg-melodia:melodia", parameters={"voicing": 0.2})
+    print("====> chords")
     chords = vamp.collect(data, sr, "nnls-chroma:chordino")
 
     return melody, chords
