@@ -2,6 +2,8 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import os
+import soundfile
+import vamp
 
 def process(song, performer):
     headers = {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
@@ -16,7 +18,13 @@ def process(song, performer):
     topurl = 'https://www.youtube.com' + res[0]['href']
 
     print(textToSearch, topurl)
-    os.system('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format wav --output "out/out.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl)
+    os.system('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format wav --output "tmp.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl)
+
+    data, sr = soundfile.read("tmp.wav")
+    if len(data.shape) > 1 and data.shape[1] > 1:
+        data = data.mean(axis=1)
+
+    melody = vamp.collect(data, sr, "mtg-melodia:melodia", parameters={"voicing": 0.2})
 
 
 songids = []
