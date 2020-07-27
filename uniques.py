@@ -31,10 +31,10 @@ def process(song, performer):
     chords = vamp.collect(data, sr, "nnls-chroma:chordino")
 
     subprocess.run('rm "' + textToSearch + '.wav"', shell=True)
-    return melody, chords
+    return (melody, chords)
 
 
-def writeout(melody, chords):
+def writeout(results):
     print("writeout called")
 
 
@@ -42,7 +42,7 @@ def writeout(melody, chords):
 h5file = h5py.File("dataset.hdf5", "w")
 h5file.close()
 
-pool = mp.Pool(2)
+pool = mp.Pool(8)
 
 songids = []
 
