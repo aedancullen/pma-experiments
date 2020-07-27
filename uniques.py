@@ -24,7 +24,11 @@ def process(song, performer):
     if len(data.shape) > 1 and data.shape[1] > 1:
         data = data.mean(axis=1)
 
-    melody = vamp.collect(data, sr, "mtg-melodia:melodia", parameters={"voicing": 0.2})
+    #melody = vamp.collect(data, sr, "mtg-melodia:melodia", parameters={"voicing": 0.2})
+    melody = None
+    chords = vamp.collect(data, sr, "nnls-chroma:chordino")
+
+    return melody, chords
 
 
 songids = []
@@ -34,8 +38,8 @@ with open("hs.csv", "r") as file:
     print(next(csv))
     for line in csv:
         url,weekid,week_position,song,performer,songid,instance,previous_week_position,peak_position,weeks_on_chart = tuple(line)
-        if not int(weekid[-4:]) >= 2010:
+        if not int(weekid[-4:]) >= 2000:
             continue
         if not songid in songids:
             songids.append(songid)
-            process(song,performer)
+            melody, chords = process(song, performer)
