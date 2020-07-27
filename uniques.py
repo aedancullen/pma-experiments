@@ -84,5 +84,6 @@ with open("hs.csv", "r") as file:
             songids.append(songid)
             pool.apply_async(process, (song,performer,peak_position), callback=writeout)
 
+print(len(songids), "total")
 pool.close()
 pool.join()
