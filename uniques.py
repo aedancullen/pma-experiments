@@ -16,7 +16,7 @@ def process(song, performer):
     topurl = 'https://www.youtube.com' + res[0]['href']
 
     print(textToSearch, topurl)
-    os.system('youtube-dl --extract-audio --audio-format wav --output "out/out.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl)
+    os.system('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format wav --output "out/out.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl)
 
 
 songids = []
