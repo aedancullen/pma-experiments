@@ -7,7 +7,7 @@ import vamp
 import multiprocessing as mp
 import h5py
 
-def process(song, performer, peak_position, weeks_on_chart):
+def process(song, performer, peak_position):
     headers = {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
 
     textToSearch = song + " " + performer
@@ -39,17 +39,16 @@ def process(song, performer, peak_position, weeks_on_chart):
     melody['vector'][0] = float(melody['vector'][0])
     for subdict in chords['list']:
         subdict['timestamp'] = float(subdict['timestamp'])
-    return (song,performer,peak_position,weeks_on_chart, melody['vector'], chords['list'])
+    return (song,performer,peak_position, melody['vector'], chords['list'])
 
 
 def writeout(results):
-    song,performer,peak_position,weeks_on_chart, melody, chords = results
+    song,performer,peak_position, melody, chords = results
     h5file = h5py.File("dataset.hdf5", "a")
     group = h5file.create_group(song + " " + performer)
     group.attrs['song'] = song.encode("ascii")
     group.attrs['performer'] = performer.encode("ascii")
     group.attrs['peak_position'] = peak_position
-    group.attrs['weeks_on_chart'] = weeks_on_chart
 
     melody_dset = group.create_dataset("melody", data=melody[1])
     melody_dset.attrs['step_time'] = melody[0]
@@ -63,16 +62,14 @@ def writeout(results):
     chord_timestamps_dset = group.create_dataset("chord_timestamps", data=chord_timestamps)
     chord_labels_dset = group.create_dataset("chord_labels", data=chord_labels)
 
-    print(h5file)
-
     h5file.close()
-
+    print("====>", song+" "+perfomer, "DONE")
 
 
 h5file = h5py.File("dataset.hdf5", "w")
 h5file.close()
 
-pool = mp.Pool(1)
+pool = mp.Pool(28)
 
 songids = []
 
@@ -85,7 +82,7 @@ with open("hs.csv", "r") as file:
             continue
         if not songid in songids:
             songids.append(songid)
-            pool.apply_async(process, (song,performer,peak_position,weeks_on_chart), callback=writeout)
+            pool.apply_async(process, (song,performer,peak_position), callback=writeout)
 
 pool.close()
 pool.join()
