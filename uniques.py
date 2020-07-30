@@ -1,3 +1,4 @@
+import string
 import csv
 import requests
 from bs4 import BeautifulSoup
@@ -7,7 +8,7 @@ import vamp
 import multiprocessing as mp
 import h5py
 
-def process(song, performer, peak_position):
+def process(song, performer, year):
     headers = {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
 
     textToSearch = song + " " + performer
@@ -39,16 +40,16 @@ def process(song, performer, peak_position):
     melody['vector'][0] = float(melody['vector'][0])
     for subdict in chords['list']:
         subdict['timestamp'] = float(subdict['timestamp'])
-    return (song,performer,peak_position, melody['vector'], chords['list'])
+    return (song,performer,year, melody['vector'], chords['list'])
 
 
 def writeout(results):
-    song,performer,peak_position, melody, chords = results
+    song,performer,year, melody, chords = results
     h5file = h5py.File("dataset.hdf5", "a")
     group = h5file.create_group(song + " " + performer)
     group.attrs['song'] = song.encode("ascii")
     group.attrs['performer'] = performer.encode("ascii")
-    group.attrs['peak_position'] = peak_position
+    group.attrs['year'] = year
 
     melody_dset = group.create_dataset("melody", data=melody[1])
     melody_dset.attrs['step_time'] = melody[0]
@@ -78,11 +79,14 @@ with open("hs.csv", "r") as file:
     next(csv) # clear first line
     for line in csv:
         url,weekid,week_position,song,performer,songid,instance,previous_week_position,peak_position,weeks_on_chart = tuple(line)
-        if not int(weekid[-4:]) >= 2019:
+        year = int(weekid[-4:])
+        song = "".join([c for c in song if c in string.ascii_letters or c in string.whitespace or c in string.digits])
+        performer = "".join([c for c in performer if c in string.ascii_letters or c in string.whitespace or c in string.digits])
+        if not year >= 2000:
             continue
         if not songid in songids:
             songids.append(songid)
-            pool.apply_async(process, (song,performer,peak_position), callback=writeout)
+            pool.apply_async(process, (song,performer, year), callback=writeout)
 
 print(len(songids), "total")
 pool.close()
