@@ -70,7 +70,7 @@ def writeout(results):
 h5file = h5py.File("dataset.hdf5", "w")
 h5file.close()
 
-pool = mp.Pool(28)
+pool = mp.Pool(8)
 
 songids = []
 
