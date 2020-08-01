@@ -25,6 +25,7 @@ def process(song, performer, year):
 
     data, sr = soundfile.read(textToSearch + ".wav")
     assert sr==44100
+    # Mix to mono if necessary
     if len(data.shape) > 1 and data.shape[1] > 1:
         data = data.mean(axis=1)
 
@@ -40,11 +41,11 @@ def process(song, performer, year):
     melody["vector"][0] = float(melody["vector"][0])
     for subdict in chords["list"]:
         subdict["timestamp"] = float(subdict["timestamp"])
-    return (song,performer,year, melody["vector"], chords["list"])
+    return (song, performer, year, melody["vector"], chords["list"])
 
 
 def writeout(results):
-    song,performer,year, melody, chords = results
+    song,performer,year,melody,chords = results
     h5file = h5py.File("dataset.hdf5", 'a')
     group = h5file.create_group(song + ' ' + performer)
     group.attrs["song"] = song.encode("ascii")
@@ -82,12 +83,12 @@ with open("hs.csv", 'r') as file:
         year = int(weekid[-4:])
         song = ''.join([c for c in song if c in string.ascii_letters or c in string.whitespace or c in string.digits])
         performer = ''.join([c for c in performer if c in string.ascii_letters or c in string.whitespace or c in string.digits])
-        songid = song+performer
+        songid = song + performer
         if not year >= 2000:
             continue
         if not songid in songids:
             songids.append(songid)
-            pool.apply_async(process, (song,performer, year), callback=writeout)
+            pool.apply_async(process, (song,performer,year), callback=writeout)
 
 print(len(songids), "total")
 pool.close()
