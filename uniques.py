@@ -64,7 +64,7 @@ def writeout(results):
     chord_labels_dset = group.create_dataset("chord_labels", data=chord_labels)
 
     h5file.close()
-    print("====>", song+" "+performer, "DONE")
+    print("====>", song + ' ' + performer, "DONE")
 
 
 h5file = h5py.File("dataset.hdf5", 'w')
