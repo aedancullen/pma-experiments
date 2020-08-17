@@ -7,6 +7,7 @@ import os
 import numpy as np
 import time
 
+n_jobs = 16
 sr = 44100
 dl_prefix = "dl/"
 audio_loader = get_default_audio_adapter()
@@ -106,7 +107,7 @@ def writeout(results):
 h5file = h5py.File("dirproc_dataset.hdf5", 'w')
 h5file.close()
 
-pool = mp.Pool(mp.cpu_count())
+pool = mp.Pool(n_jobs)
 
 songids = []
 
@@ -114,7 +115,7 @@ for filename in os.listdir(dl_prefix):
     waveform, _ = audio_loader.load(dl_prefix + filename, sample_rate=sr)
     songids.append(filename)
 
-    while len(pool._cache) > mp.cpu_count():
+    while len(pool._cache) > n_jobs:
         time.sleep(0.1) # hacky ratelimit to prevent filling memory with waveforms awaiting pool
 
     pool.apply_async(process, (filename[:-4], waveform), callback=writeout)
