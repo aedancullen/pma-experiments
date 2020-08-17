@@ -116,12 +116,11 @@ for filename in os.listdir(dl_prefix):
 
     songids.append(filename)
 
-    print(len(pool._cache))
     while len(pool._cache) > mp.cpu_count():
         time.sleep(0.1) # hacky ratelimit to prevent filling memory with waveforms awaiting pool
 
     pool.apply_async(process, (filename[:-4], vocal, other, bass), callback=writeout)
-
+    print(len(pool._cache))
 
 print(len(songids), "total")
 pool.close()
