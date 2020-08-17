@@ -6,6 +6,11 @@ from spleeter.audio.adapter import get_default_audio_adapter
 import os
 import numpy as np
 
+def monomix(data):
+    if len(data.shape) > 1 and data.shape[1] > 1:
+        data = data.mean(axis=1)
+    return data
+
 def process(filename):
     sr = 44100
 
@@ -14,9 +19,9 @@ def process(filename):
 
     prediction = separator.separate(waveform)
 
-    vocal = prediction["vocals"]
-    other = prediction["other"]
-    bass = prediction["bass"]
+    vocal = monomix(prediction["vocals"])
+    other = monomix(prediction["other"])
+    bass = monomix(prediction["bass"])
 
     chordmix = np.mean([other, bass], axis=0)
 
