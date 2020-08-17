@@ -17,7 +17,12 @@ def monomix(data):
         data = data.mean(axis=1)
     return data
 
-def process(combname, vocal, other, bass):
+def process(combname, waveform):
+    prediction = separator.separate(waveform)
+
+    vocal = monomix(prediction["vocals"])
+    other = monomix(prediction["other"])
+    bass = monomix(prediction["bass"])
 
     chordmix_novocal = np.mean([other, bass], axis=0)
     chordmix_withvocal = np.mean([vocal, other, bass], axis=0)
@@ -106,22 +111,14 @@ pool = mp.Pool(mp.cpu_count())
 songids = []
 
 for filename in os.listdir(dl_prefix):
-
     waveform, _ = audio_loader.load(dl_prefix + filename, sample_rate=sr)
-    prediction = separator.separate(waveform)
-
-    vocal = monomix(prediction["vocals"])
-    other = monomix(prediction["other"])
-    bass = monomix(prediction["bass"])
-
     songids.append(filename)
 
-    print(len(pool._cache))
     while len(pool._cache) > mp.cpu_count():
         time.sleep(0.1) # hacky ratelimit to prevent filling memory with waveforms awaiting pool
 
-    pool.apply_async(process, (filename[:-4], vocal, other, bass), callback=writeout)
-
+    pool.apply_async(process, (filename[:-4], waveform), callback=writeout)
+    print(len(pool._cache))
 
 print(len(songids), "total")
 pool.close()
