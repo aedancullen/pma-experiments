@@ -5,6 +5,7 @@ from spleeter.separator import Separator
 from spleeter.audio.adapter import get_default_audio_adapter
 import os
 import numpy as np
+import time
 
 sr = 44100
 dl_prefix = "dl/"
@@ -105,6 +106,7 @@ pool = mp.Pool(mp.cpu_count())
 songids = []
 
 for filename in os.listdir(dl_prefix):
+
     waveform, _ = audio_loader.load(dl_prefix + filename, sample_rate=sr)
     prediction = separator.separate(waveform)
 
@@ -113,9 +115,13 @@ for filename in os.listdir(dl_prefix):
     bass = monomix(prediction["bass"])
 
     songids.append(filename)
+
+    print(len(pool._cache))
+    while len(pool._cache) > mp.cpu_count():
+        time.sleep(0.1) # hacky ratelimit to prevent filling memory with waveforms awaiting pool
+
     pool.apply_async(process, (filename[:-4], vocal, other, bass), callback=writeout)
-    #writeout(process(filename[:-4], vocal, other, bass))
-    break
+
 
 print(len(songids), "total")
 pool.close()
