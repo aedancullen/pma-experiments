@@ -7,7 +7,6 @@ import os
 import numpy as np
 import time
 
-n_jobs = 16
 sr = 44100
 dl_prefix = "dl/"
 audio_loader = get_default_audio_adapter()
@@ -18,12 +17,7 @@ def monomix(data):
         data = data.mean(axis=1)
     return data
 
-def process(combname, waveform):
-    prediction = separator.separate(waveform)
-
-    vocal = monomix(prediction["vocals"])
-    other = monomix(prediction["other"])
-    bass = monomix(prediction["bass"])
+def process(combname, vocal, other, bass):
 
     chordmix_novocal = np.mean([other, bass], axis=0)
     chordmix_withvocal = np.mean([vocal, other, bass], axis=0)
@@ -107,19 +101,27 @@ def writeout(results):
 h5file = h5py.File("dirproc_dataset.hdf5", 'w')
 h5file.close()
 
-pool = mp.Pool(n_jobs)
+pool = mp.Pool(mp.cpu_count())
 
 songids = []
 
 for filename in os.listdir(dl_prefix):
+
     waveform, _ = audio_loader.load(dl_prefix + filename, sample_rate=sr)
+    prediction = separator.separate(waveform)
+
+    vocal = monomix(prediction["vocals"])
+    other = monomix(prediction["other"])
+    bass = monomix(prediction["bass"])
+
     songids.append(filename)
 
-    while len(pool._cache) > n_jobs:
+    print(len(pool._cache))
+    while len(pool._cache) > mp.cpu_count():
         time.sleep(0.1) # hacky ratelimit to prevent filling memory with waveforms awaiting pool
 
-    pool.apply_async(process, (filename[:-4], waveform), callback=writeout)
-    print(len(pool._cache))
+    pool.apply_async(process, (filename[:-4], vocal, other, bass), callback=writeout)
+
 
 print(len(songids), "total")
 pool.close()
