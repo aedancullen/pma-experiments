@@ -4,9 +4,9 @@ import h5py
 from spleeter.separator import Separator
 from spleeter.audio.adapter import get_default_audio_adapter
 import os
-import sys
 import numpy as np
 
+sr = 44100
 dl_prefix = "dl/"
 audio_loader = get_default_audio_adapter()
 separator = Separator("spleeter:4stems")
@@ -80,8 +80,6 @@ def writeout(results):
         chordnote_timestamps.append(chordnote["timestamp"])
         chordnote_values.append(chordnote["values"][0])
 
-    print(chordnote_timestamps)
-    print(chordnote_values)
     chordnote_timestamps_dset = group.create_dataset("chordnote_timestamps", data=chordnote_timestamps)
     chordnote_values_dset = group.create_dataset("chordnote_values", data=chordnote_values)
 
@@ -98,16 +96,16 @@ pool = mp.Pool(mp.cpu_count())
 songids = []
 
 for filename in os.listdir(dl_prefix):
-    waveform, _ = audio_loader.load(dl_prefix + filename, sample_rate=44100)
+    waveform, _ = audio_loader.load(dl_prefix + filename, sample_rate=sr)
     prediction = separator.separate(waveform)
 
     vocal = monomix(prediction["vocals"])
     other = monomix(prediction["other"])
     bass = monomix(prediction["bass"])
 
-    #songids.append(filename)
-    #pool.apply_async(process, (filename), callback=writeout)
-    writeout(process(filename[:-4], vocal, other, bass))
+    songids.append(filename)
+    pool.apply_async(process, (filename[:-4], vocal, other, bass), callback=writeout)
+    #writeout(process(filename[:-4], vocal, other, bass))
     break
 
 print(len(songids), "total")
