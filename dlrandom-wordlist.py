@@ -13,8 +13,6 @@ with open(wordlist, "r") as handle:
             break
         words_list.append(line)
 
-prefix = ['IMG ', 'IMG_', 'IMG-', 'DSC ']
-postfix = [' MOV', '.MOV', ' .MOV']
 url_prefix = "/watch?v="
 s = requests.Session()
 random.shuffle(words_list)
