@@ -17,6 +17,7 @@ prefix = ['IMG ', 'IMG_', 'IMG-', 'DSC ']
 postfix = [' MOV', '.MOV', ' .MOV']
 url_prefix = "/watch?v="
 s = requests.Session()
+random.shuffle(words_list)
 
 def process(textToSearch):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"}
@@ -33,10 +34,6 @@ def process(textToSearch):
     subprocess.run('youtube-dl -f bestaudio[asr=44100] --extract-audio --audio-format mp3 --output "dlrandom-wordlist/' + textToSearch + '.%(ext)s" --ffmpeg-location ffmpeg-4.3.1-amd64-static/ffmpeg ' + topurl, shell=True, stdout=subprocess.DEVNULL)
 
 
-songids = []
-
 for i in range(8000):
-    songid = random.choice(words_list).strip()
-    if not songid in songids:
-        songids.append(songid)
-        process(songid)
+    songid = word_list[i]
+    process(songid)
