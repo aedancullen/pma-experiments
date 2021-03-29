@@ -35,5 +35,5 @@ def process(textToSearch):
 
 
 for i in range(8000):
-    songid = word_list[i]
+    songid = words_list[i]
     process(songid)
